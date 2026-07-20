@@ -20,6 +20,9 @@ states, and task interactions.
 - Monday through Sunday each own one focus state and one planet.
 - The active day, task card, planet, camera, and orbital focus indicator must
   remain synchronized while scrolling or using the day rail.
+- Hovering the far-right day rail and scrolling advances exactly one day per
+  wheel gesture, clamps at Monday and Sunday, and keeps the list and planet
+  camera synchronized.
 - All planets continuously orbit the central Mint Sun without visible orbit
   rails, rings, guide lines, or path geometry.
 - Focus transitions zoom behind the chosen planet and look inward toward the
@@ -54,7 +57,8 @@ states, and task interactions.
 Verify:
 
 - every production Mint GLB and background image exists and loads;
-- scrolling, day navigation, and the active-day indicator stay synchronized;
+- scrolling, clicking, and wheel navigation on the far-right day rail keep the
+  active list, planet camera, and active-day indicator synchronized;
 - every planet completes an orbit without crossing the task card;
 - all seven behind-planet focus cameras keep the Sun and multiple other planets
   readable, including mobile;

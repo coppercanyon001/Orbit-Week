@@ -295,7 +295,15 @@ button {
   top: 50%;
   display: grid;
   gap: 14px;
+  padding: 12px 8px;
   transform: translateY(-50%);
+  overscroll-behavior: contain;
+  border-radius: 20px;
+  transition: background 180ms;
+}
+
+.orbit-day-rail:hover {
+  background: rgba(5, 8, 15, 0.22);
 }
 
 .orbit-day-rail button {
@@ -332,7 +340,12 @@ button {
   background: currentColor;
   transition:
     width 180ms,
-    background 180ms;
+    background 180ms,
+    opacity 180ms;
+}
+
+.orbit-day-rail:hover i {
+  opacity: 0.78;
 }
 
 .orbit-day-rail button:hover span,

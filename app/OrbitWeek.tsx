@@ -1071,6 +1071,10 @@ function DayCard({
 export default function OrbitWeek() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrollProgress = useRef(0);
+  const activeDayRef = useRef(0);
+  const railWheelAccumulator = useRef(0);
+  const railWheelLocked = useRef(false);
+  const railWheelTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [activeDay, setActiveDay] = useState(0);
   const [tasks, setTasks] = useState<TaskMap>(EMPTY_TASKS);
   const [hydrated, setHydrated] = useState(false);
@@ -1105,6 +1109,13 @@ export default function OrbitWeek() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
   }, [hydrated, tasks]);
 
+  useEffect(
+    () => () => {
+      if (railWheelTimer.current) clearTimeout(railWheelTimer.current);
+    },
+    [],
+  );
+
   const totals = useMemo(() => {
     const allTasks = Object.values(tasks).flat();
     return {
@@ -1124,6 +1135,7 @@ export default function OrbitWeek() {
       DAYS.length - 1,
     );
     const next = Math.round(scrollProgress.current);
+    activeDayRef.current = next;
     setActiveDay((current) => (current === next ? current : next));
   };
 
@@ -1131,6 +1143,48 @@ export default function OrbitWeek() {
     const element = scrollRef.current;
     if (!element) return;
     element.scrollTo({ top: index * element.clientHeight, behavior: "smooth" });
+  };
+
+  const onRailWheel = (event: React.WheelEvent<HTMLElement>) => {
+    event.preventDefault();
+    if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+
+    const element = scrollRef.current;
+    if (!element) return;
+
+    const delta =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? event.deltaY * 16
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? event.deltaY * element.clientHeight
+          : event.deltaY;
+
+    railWheelAccumulator.current += delta;
+    if (
+      railWheelLocked.current ||
+      Math.abs(railWheelAccumulator.current) < 24
+    ) {
+      return;
+    }
+
+    const direction = railWheelAccumulator.current > 0 ? 1 : -1;
+    const next = THREE.MathUtils.clamp(
+      activeDayRef.current + direction,
+      0,
+      DAYS.length - 1,
+    );
+
+    railWheelAccumulator.current = 0;
+    railWheelLocked.current = true;
+    activeDayRef.current = next;
+    setActiveDay(next);
+    goToDay(next);
+
+    if (railWheelTimer.current) clearTimeout(railWheelTimer.current);
+    railWheelTimer.current = setTimeout(() => {
+      railWheelLocked.current = false;
+      railWheelAccumulator.current = 0;
+    }, 420);
   };
 
   const updateDay = (
@@ -1191,7 +1245,14 @@ export default function OrbitWeek() {
         </div>
       </header>
 
-      <nav className="orbit-day-rail" aria-label="Days of the week">
+      <nav
+        className="orbit-day-rail"
+        aria-label="Days of the week. Hover and scroll to move between lists."
+        onWheel={onRailWheel}
+        onMouseLeave={() => {
+          railWheelAccumulator.current = 0;
+        }}
+      >
         {DAYS.map((day, index) => (
           <button
             type="button"
