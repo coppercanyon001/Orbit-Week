@@ -25,6 +25,10 @@ states, and task interactions.
   camera synchronized.
 - All planets continuously orbit the central Mint Sun without visible orbit
   rails, rings, guide lines, or path geometry.
+- For the demo formation, all seven planets share one slowly rotating orbital
+  heading while their radii step progressively farther from the Sun. A small
+  parallel lateral offset prevents exact eclipses, and scrolling carries the
+  camera deeper along this ordered planetary procession.
 - Focus transitions zoom behind the chosen planet and look inward toward the
   Sun; the rest of the system remains visible beyond the focused planet. The
   camera follows the shortest eased orbital arc, while its target, orientation,
@@ -33,6 +37,9 @@ states, and task interactions.
   eased orbit around the Sun, spirals inward, and lands in Monday's established
   behind-Mercury focus. The intro must finish in roughly three seconds, yield
   to day navigation, and skip for `prefers-reduced-motion` users.
+- Monday's title card remains just offscreen during the launch orbit, then
+  slides and fades into its final panel position during the Mercury landing.
+  Navigation cancellation and reduced-motion mode reveal it immediately.
 - The Sun uses three assembled copies of its Mint-authored mesh and PBR
   material: a dense emissive photosphere, a translucent boiling surface, and a
   compact heat shell. Independent UV drift, granular normal pressure, emission,
@@ -71,6 +78,8 @@ Verify:
 - scrolling, clicking, and wheel navigation on the far-right day rail keep the
   active list, planet camera, and active-day indicator synchronized;
 - every planet completes an orbit without crossing the task card;
+- the aligned demo formation remains ordered Mercury-through-Neptune, retains
+  readable separation, and unfolds deeper into space as the days scroll;
 - all seven behind-planet focus cameras keep the Sun and multiple other planets
   readable, including mobile;
 - camera travel follows a smooth continuous arc at both one-day and multi-day

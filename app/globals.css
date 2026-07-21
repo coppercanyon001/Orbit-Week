@@ -404,6 +404,28 @@ button {
   backdrop-filter: blur(24px);
 }
 
+.orbit-day-section:first-child .orbit-card {
+  will-change: transform, opacity;
+  transition:
+    transform 760ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 480ms ease-out;
+}
+
+.orbit-app.is-launching .orbit-day-section:first-child .orbit-card {
+  opacity: 0;
+  transform: translate3d(120px, 18px, 0) scale(0.965);
+  pointer-events: none;
+}
+
+.orbit-app.is-launch-landed .orbit-day-section:first-child .orbit-card {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.orbit-app.is-launch-instant .orbit-day-section:first-child .orbit-card {
+  transition: none;
+}
+
 .orbit-card::before {
   content: "";
   width: 40px;

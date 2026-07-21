@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
@@ -134,8 +141,10 @@ function createTaskId() {
 
 function OrbitScene({
   scrollProgress,
+  onLaunchLanded,
 }: {
   scrollProgress: React.MutableRefObject<number>;
+  onLaunchLanded: (instant: boolean) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">(
@@ -199,13 +208,18 @@ function OrbitScene({
     let smoothedFocus = scrollProgress.current;
     let launchOrbitStartedAt: number | null = null;
     let launchOrbitComplete = false;
+    let launchLandingSignaled = false;
     const forceLaunchMotion =
       new URLSearchParams(window.location.search).get("orbit-motion") ===
       "full";
 
-    const orbitRadii = [3.4, 5.4, 7.4, 9.4, 11.4, 13.4, 15.4];
-    const orbitSpeeds = [0.095, 0.076, 0.063, 0.053, 0.043, 0.036, 0.03];
-    const orbitPhases = [0.38, 1.52, 2.62, 3.72, 4.73, 5.62, 0.93];
+    const signalLaunchLanded = (instant: boolean) => {
+      if (launchLandingSignaled) return;
+      launchLandingSignaled = true;
+      onLaunchLanded(instant);
+    };
+
+    const orbitRadii = [4.1, 7.2, 10.6, 14.3, 18.3, 22.6, 27.2];
     const atmosphericPlanets = new Set<OrbitPlanet>([
       "venus",
       "jupiter",
@@ -883,13 +897,15 @@ function OrbitScene({
         });
       }
 
+      const formationAngle = 0.38 + elapsed * 0.032 * motion;
+      const formationCos = Math.cos(formationAngle);
+      const formationSin = Math.sin(formationAngle);
       planetRoots.forEach((root, index) => {
-        const angle =
-          orbitPhases[index] + elapsed * orbitSpeeds[index] * motion;
+        const lateralOffset = (index - (DAYS.length - 1) * 0.5) * 0.2;
         root.position.set(
-          Math.cos(angle) * orbitRadii[index],
-          Math.sin(angle * 0.73 + index) * 0.09,
-          Math.sin(angle) * orbitRadii[index],
+          formationCos * orbitRadii[index] - formationSin * lateralOffset,
+          (index - 3) * 0.045 + Math.sin(elapsed * 0.28 + index) * 0.025,
+          formationSin * orbitRadii[index] + formationCos * lateralOffset,
         );
         root.children[0].rotation.y =
           elapsed * (0.055 + index * 0.004) * motion + index * 0.67;
@@ -1019,6 +1035,7 @@ function OrbitScene({
 
         if (requestedFocus > 0.01) {
           launchOrbitComplete = true;
+          signalLaunchLanded(true);
         }
 
         const launchDuration = narrow ? 2.75 : 3.15;
@@ -1045,13 +1062,13 @@ function OrbitScene({
           const launchAngle =
             focusAngle - Math.PI * 2.3 + Math.PI * 2.3 * launchEase;
           const launchRadius = THREE.MathUtils.lerp(
-            narrow ? 18 : 26,
+            narrow ? 34 : 40,
             focusRadius + cameraDistance,
             launchEase,
           );
           const launchHeight =
             THREE.MathUtils.lerp(
-              narrow ? 7.5 : 10.5,
+              narrow ? 10.5 : 13,
               desiredCamera.y,
               launchEase,
             ) +
@@ -1075,19 +1092,24 @@ function OrbitScene({
           lookTarget.copy(launchLookTarget);
           camera.lookAt(lookTarget);
           camera.fov = THREE.MathUtils.lerp(
-            narrow ? 54 : 58,
+            narrow ? 58 : 64,
             narrow ? 44 : 37,
             launchEase,
           );
           firstFocus = false;
+          if (launchProgress >= 0.78) signalLaunchLanded(false);
         } else if (firstFocus) {
           camera.position.copy(desiredCamera);
           lookTarget.copy(desiredLookTarget);
           camera.lookAt(lookTarget);
           firstFocus = false;
           launchOrbitComplete = true;
+          signalLaunchLanded(true);
         } else {
-          if (launchProgress >= 1) launchOrbitComplete = true;
+          if (launchProgress >= 1) {
+            launchOrbitComplete = true;
+            signalLaunchLanded(false);
+          }
 
           camera.position.lerp(
             desiredCamera,
@@ -1205,7 +1227,7 @@ function OrbitScene({
         materials.forEach((material) => material.dispose());
       });
     };
-  }, [scrollProgress]);
+  }, [onLaunchLanded, scrollProgress]);
 
   return (
     <div className="orbit-scene" aria-hidden="true">
@@ -1349,7 +1371,14 @@ export default function OrbitWeek() {
   const [activeDay, setActiveDay] = useState(0);
   const [tasks, setTasks] = useState<TaskMap>(EMPTY_TASKS);
   const [hydrated, setHydrated] = useState(false);
+  const [launchLanded, setLaunchLanded] = useState(false);
+  const [launchLandingInstant, setLaunchLandingInstant] = useState(false);
   const dates = useMemo(() => dayDates(), []);
+
+  const onLaunchLanded = useCallback((instant: boolean) => {
+    if (instant) setLaunchLandingInstant(true);
+    setLaunchLanded(true);
+  }, []);
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -1470,7 +1499,7 @@ export default function OrbitWeek() {
 
   return (
     <main
-      className="orbit-app"
+      className={`orbit-app ${launchLanded ? "is-launch-landed" : "is-launching"} ${launchLandingInstant ? "is-launch-instant" : ""}`}
       style={
         {
           "--space-background": `url(${ORBIT_WEEK_MINT_ASSETS.background})`,
@@ -1478,7 +1507,10 @@ export default function OrbitWeek() {
         } as React.CSSProperties
       }
     >
-      <OrbitScene scrollProgress={scrollProgress} />
+      <OrbitScene
+        scrollProgress={scrollProgress}
+        onLaunchLanded={onLaunchLanded}
+      />
 
       <header className="orbit-header">
         <button

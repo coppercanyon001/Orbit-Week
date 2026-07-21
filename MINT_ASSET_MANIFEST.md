@@ -14,11 +14,17 @@ focus states, and accessible interaction.
 
 - The launch sequence introduces no new visible asset. Three.js moves the
   camera around the existing approved Mint solar system and lands on Mercury.
+- The seven approved Mint planets travel in one parallel depth formation with
+  progressively larger solar radii. Three.js preserves their order and moves
+  the focus camera down the lineup as the weekly lists scroll.
 - The camera begins in a wide system view, completes a little more than one
   eased revolution, spirals inward, narrows its field of view, and settles on
   the exact Monday focus camera in roughly three seconds.
 - User navigation cancels the intro cleanly. Reduced-motion users start at the
   final Mercury view without the launch orbit.
+- The deterministic DOM Monday card stays offscreen during flight and slides
+  into place as the camera enters its final Mercury approach. It introduces no
+  new visual asset and appears instantly when the orbit is skipped.
 
 ## Version 6 Living-Orbit Contract
 
