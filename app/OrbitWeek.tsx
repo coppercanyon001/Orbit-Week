@@ -197,6 +197,11 @@ function OrbitScene({
     let stopped = false;
     let firstFocus = true;
     let smoothedFocus = scrollProgress.current;
+    let launchOrbitStartedAt: number | null = null;
+    let launchOrbitComplete = false;
+    const forceLaunchMotion =
+      new URLSearchParams(window.location.search).get("orbit-motion") ===
+      "full";
 
     const orbitRadii = [3.4, 5.4, 7.4, 9.4, 11.4, 13.4, 15.4];
     const orbitSpeeds = [0.095, 0.076, 0.063, 0.053, 0.043, 0.036, 0.03];
@@ -756,6 +761,7 @@ function OrbitScene({
           });
 
           applyLayout();
+          launchOrbitStartedAt = timer.getElapsed();
           setLoadState("ready");
         },
       )
@@ -774,6 +780,8 @@ function OrbitScene({
     const stationOffset = new THREE.Vector3();
     const lookMatrix = new THREE.Matrix4();
     const desiredCameraQuaternion = new THREE.Quaternion();
+    const launchCamera = new THREE.Vector3();
+    const launchLookTarget = new THREE.Vector3();
 
     const render = () => {
       timer.update();
@@ -782,9 +790,9 @@ function OrbitScene({
       const width = canvas.clientWidth || window.innerWidth;
       const height = canvas.clientHeight || window.innerHeight;
       const narrow = width / Math.max(height, 1) < 0.76;
-      const reduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
+      const reduceMotion =
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+        !forceLaunchMotion;
       const motion = reduceMotion ? 0.22 : 1;
 
       if (sunRoot) {
@@ -1005,23 +1013,86 @@ function OrbitScene({
           .addScaledVector(radial, cameraDistance)
           .addScaledVector(tangent, narrow ? -0.32 : -1.18);
         desiredCamera.y += narrow ? 1.34 : 1.72;
+        desiredLookTarget
+          .set(0, narrow ? 0.42 : 0.28, 0)
+          .addScaledVector(tangent, narrow ? -0.28 : -2.05);
 
-        if (firstFocus) {
+        if (requestedFocus > 0.01) {
+          launchOrbitComplete = true;
+        }
+
+        const launchDuration = narrow ? 2.75 : 3.15;
+        const launchProgress = THREE.MathUtils.clamp(
+          launchOrbitStartedAt === null
+            ? 1
+            : (elapsed - launchOrbitStartedAt) / launchDuration,
+          0,
+          1,
+        );
+        const launchActive =
+          !reduceMotion &&
+          !launchOrbitComplete &&
+          requestedFocus <= 0.01 &&
+          launchProgress < 1;
+
+        if (launchActive) {
+          const launchEase =
+            launchProgress *
+            launchProgress *
+            launchProgress *
+            (launchProgress * (launchProgress * 6 - 15) + 10);
+          const settle = THREE.MathUtils.smoothstep(launchProgress, 0.72, 1);
+          const launchAngle =
+            focusAngle - Math.PI * 2.3 + Math.PI * 2.3 * launchEase;
+          const launchRadius = THREE.MathUtils.lerp(
+            narrow ? 18 : 26,
+            focusRadius + cameraDistance,
+            launchEase,
+          );
+          const launchHeight =
+            THREE.MathUtils.lerp(
+              narrow ? 7.5 : 10.5,
+              desiredCamera.y,
+              launchEase,
+            ) +
+            Math.sin(launchProgress * Math.PI) * (narrow ? 1 : 1.8);
+
+          launchCamera.set(
+            Math.cos(launchAngle) * launchRadius,
+            launchHeight,
+            Math.sin(launchAngle) * launchRadius,
+          );
+          launchCamera.lerp(desiredCamera, settle);
+          camera.position.copy(launchCamera);
+
+          launchLookTarget
+            .set(
+              0,
+              THREE.MathUtils.lerp(1.3, desiredLookTarget.y, launchEase),
+              0,
+            )
+            .lerp(desiredLookTarget, settle);
+          lookTarget.copy(launchLookTarget);
+          camera.lookAt(lookTarget);
+          camera.fov = THREE.MathUtils.lerp(
+            narrow ? 54 : 58,
+            narrow ? 44 : 37,
+            launchEase,
+          );
+          firstFocus = false;
+        } else if (firstFocus) {
           camera.position.copy(desiredCamera);
-          desiredLookTarget
-            .set(0, narrow ? 0.42 : 0.28, 0)
-            .addScaledVector(tangent, narrow ? -0.28 : -2.05);
           lookTarget.copy(desiredLookTarget);
           camera.lookAt(lookTarget);
           firstFocus = false;
+          launchOrbitComplete = true;
         } else {
+          if (launchProgress >= 1) launchOrbitComplete = true;
+
           camera.position.lerp(
             desiredCamera,
             1 - Math.exp(-delta * (narrow ? 4.8 : 4.2)),
           );
-          desiredLookTarget
-            .set(0, narrow ? 0.42 : 0.28, 0)
-            .addScaledVector(tangent, narrow ? -0.28 : -2.05);
           lookTarget.lerp(
             desiredLookTarget,
             1 - Math.exp(-delta * (narrow ? 5.4 : 4.8)),
@@ -1034,12 +1105,14 @@ function OrbitScene({
           );
         }
 
-        const transitionLift = Math.sin(rawTransition * Math.PI);
-        camera.fov = THREE.MathUtils.lerp(
-          camera.fov,
-          (narrow ? 44 : 37) + transitionLift * (narrow ? 7 : 5),
-          1 - Math.exp(-delta * 4.8),
-        );
+        if (!launchActive) {
+          const transitionLift = Math.sin(rawTransition * Math.PI);
+          camera.fov = THREE.MathUtils.lerp(
+            camera.fov,
+            (narrow ? 44 : 37) + transitionLift * (narrow ? 7 : 5),
+            1 - Math.exp(-delta * 4.8),
+          );
+        }
         camera.updateProjectionMatrix();
       } else {
         camera.lookAt(0, 0, 0);

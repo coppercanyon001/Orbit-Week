@@ -10,6 +10,16 @@ Three.js only loads, scales, positions, lights, rotates, and renders those
 assets. CSS and DOM provide deterministic labels, task controls, progress,
 focus states, and accessible interaction.
 
+## Version 7 Launch-Orbit Contract
+
+- The launch sequence introduces no new visible asset. Three.js moves the
+  camera around the existing approved Mint solar system and lands on Mercury.
+- The camera begins in a wide system view, completes a little more than one
+  eased revolution, spirals inward, narrows its field of view, and settles on
+  the exact Monday focus camera in roughly three seconds.
+- User navigation cancels the intro cleanly. Reduced-motion users start at the
+  final Mercury view without the launch orbit.
+
 ## Version 6 Living-Orbit Contract
 
 - Camera travel follows a continuous eased orbital arc between adjacent focus

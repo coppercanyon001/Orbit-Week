@@ -29,6 +29,10 @@ states, and task interactions.
   Sun; the rest of the system remains visible beyond the focused planet. The
   camera follows the shortest eased orbital arc, while its target, orientation,
   and field of view interpolate continuously instead of snapping at midpoints.
+- On first launch, the camera begins outside the system, completes a quick
+  eased orbit around the Sun, spirals inward, and lands in Monday's established
+  behind-Mercury focus. The intro must finish in roughly three seconds, yield
+  to day navigation, and skip for `prefers-reduced-motion` users.
 - The Sun uses three assembled copies of its Mint-authored mesh and PBR
   material: a dense emissive photosphere, a translucent boiling surface, and a
   compact heat shell. Independent UV drift, granular normal pressure, emission,
@@ -71,6 +75,8 @@ Verify:
   readable, including mobile;
 - camera travel follows a smooth continuous arc at both one-day and multi-day
   jumps, with no target, orientation, or FOV snap;
+- the launch orbit shows the wider Mint solar system, completes without
+  clipping through a planet or the task card, and settles exactly on Mercury;
 - no visible orbit rail, ring, tube, guide, or path geometry remains;
 - meteor and comet paths stay behind the complete solar system, carry a readable
   local light, remain microscopic, and do not intersect the camera;
