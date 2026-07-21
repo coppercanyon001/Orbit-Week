@@ -166,7 +166,7 @@ function OrbitScene({
     const cameraFill = new THREE.DirectionalLight(0xb8c9e7, 1.1);
     cameraFill.position.set(3, 7, 9);
     scene.add(cameraFill);
-    const focusFill = new THREE.PointLight(0xdfe7f4, 22, 12, 1.45);
+    const focusFill = new THREE.PointLight(0xdfe7f4, 38, 14, 1.45);
     focusFill.position.set(0.8, 1.8, 1.4);
     camera.add(focusFill);
     const solarLight = new THREE.PointLight(0xffb867, 125, 48, 1.45);
@@ -184,14 +184,19 @@ function OrbitScene({
     }> = [];
     let sunRoot: THREE.Group | null = null;
     let sunBoilLayer: THREE.Group | null = null;
-    let sunShell: THREE.Group | null = null;
+    let sunVaporShell: THREE.Group | null = null;
     let sunRootMaterials: THREE.MeshStandardMaterial[] = [];
     let sunBoilMaterials: THREE.MeshStandardMaterial[] = [];
-    let sunShellMaterials: THREE.MeshStandardMaterial[] = [];
+    let sunVaporMaterials: THREE.MeshStandardMaterial[] = [];
+    let orbitalStationRoot: THREE.Group | null = null;
+    let outerSystemUfoRoot: THREE.Group | null = null;
+    const orbitalStationMaterials: THREE.MeshStandardMaterial[] = [];
+    const outerSystemUfoMaterials: THREE.MeshStandardMaterial[] = [];
     let saturnRingRoot: THREE.Group | null = null;
     let frame = 0;
     let stopped = false;
     let firstFocus = true;
+    let smoothedFocus = scrollProgress.current;
 
     const orbitRadii = [3.4, 5.4, 7.4, 9.4, 11.4, 13.4, 15.4];
     const orbitSpeeds = [0.095, 0.076, 0.063, 0.053, 0.043, 0.036, 0.03];
@@ -498,6 +503,8 @@ function OrbitScene({
       loadModel(ORBIT_WEEK_MINT_ASSETS.sun),
       loadModel(ORBIT_WEEK_MINT_ASSETS.sun),
       loadModel(ORBIT_WEEK_MINT_ASSETS.sun),
+      loadModel(ORBIT_WEEK_MINT_ASSETS.livingOrbit.orbitalStation),
+      loadModel(ORBIT_WEEK_MINT_ASSETS.livingOrbit.outerSystemUfo),
       loadModel(ORBIT_WEEK_MINT_ASSETS.saturnRings),
       Promise.all(
         DAYS.map(({ planet }) =>
@@ -509,6 +516,7 @@ function OrbitScene({
           loadModel(url),
         ),
       ),
+      loadMaterialSet(ORBIT_WEEK_MINT_ASSETS.materials.venus),
       loadMaterialSet(ORBIT_WEEK_MINT_ASSETS.materials.sun),
       loadMaterialSet(ORBIT_WEEK_MINT_ASSETS.materials.jupiter),
       loadMaterialSet(ORBIT_WEEK_MINT_ASSETS.materials.neptune),
@@ -517,10 +525,13 @@ function OrbitScene({
         ([
           sun,
           boilingSurface,
-          heatShell,
+          vaporShell,
+          orbitalStation,
+          outerSystemUfo,
           saturnRings,
           planets,
           flybys,
+          venusMaterial,
           sunMaterial,
           jupiterMaterial,
           neptuneMaterial,
@@ -532,8 +543,8 @@ function OrbitScene({
           applySphericalUv(sunRoot);
           sunRootMaterials = applyMintMaterial(sunRoot, sunMaterial, {
             speed: 0.008,
-            emissiveIntensity: 1.95,
-            normalScale: 0.24,
+            emissiveIntensity: 1.42,
+            normalScale: 0.3,
             roughness: 0.82,
             wobble: 0.006,
           });
@@ -545,26 +556,26 @@ function OrbitScene({
           applySphericalUv(sunBoilLayer);
           sunBoilMaterials = applyMintMaterial(sunBoilLayer, sunMaterial, {
             speed: -0.013,
-            emissiveIntensity: 1.72,
-            opacity: 0.2,
-            normalScale: 0.34,
+            emissiveIntensity: 1.08,
+            opacity: 0.17,
+            normalScale: 0.38,
             roughness: 0.78,
             wobble: 0.013,
           });
 
-          sunShell = heatShell;
-          sunShell.scale.setScalar(3.23);
-          sunShell.renderOrder = 2;
-          scene.add(sunShell);
-          applySphericalUv(sunShell);
-          sunShellMaterials = applyMintMaterial(sunShell, sunMaterial, {
-            speed: 0.019,
-            emissiveIntensity: 1.36,
-            opacity: 0.12,
+          sunVaporShell = vaporShell;
+          sunVaporShell.scale.setScalar(3.23);
+          sunVaporShell.renderOrder = 2;
+          scene.add(sunVaporShell);
+          applySphericalUv(sunVaporShell);
+          sunVaporMaterials = applyMintMaterial(sunVaporShell, sunMaterial, {
+            speed: 0.017,
+            emissiveIntensity: 0.86,
+            opacity: 0.1,
             additive: true,
-            normalScale: 0.18,
-            roughness: 0.9,
-            wobble: 0.018,
+            normalScale: 0.16,
+            roughness: 0.92,
+            wobble: 0.015,
           });
 
           planets.forEach((root, index) => {
@@ -587,7 +598,15 @@ function OrbitScene({
                 material.needsUpdate = true;
               });
             });
-            if (DAYS[index].planet === "jupiter") {
+            if (DAYS[index].planet === "venus") {
+              applySphericalUv(root);
+              applyMintMaterial(root, venusMaterial, {
+                speed: 0.0009,
+                normalScale: 0.13,
+                roughness: 0.97,
+                wobble: 0.0018,
+              });
+            } else if (DAYS[index].planet === "jupiter") {
               applySphericalUv(root);
               applyMintMaterial(root, jupiterMaterial, {
                 speed: 0.0018,
@@ -648,6 +667,62 @@ function OrbitScene({
             planetRoots.push(root);
           });
 
+          orbitalStationRoot = orbitalStation;
+          orbitalStationRoot.visible = false;
+          orbitalStationRoot.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            const materials = Array.isArray(object.material)
+              ? object.material
+              : [object.material];
+            materials.forEach((material) => {
+              if (!(material instanceof THREE.MeshStandardMaterial)) return;
+              material.transparent = true;
+              material.opacity = 0;
+              material.depthWrite = false;
+              material.metalness = Math.min(material.metalness, 0.58);
+              material.roughness = Math.max(material.roughness, 0.46);
+              if (material.map) {
+                material.emissive.set(0x778aa2);
+                material.emissiveMap = material.map;
+                material.emissiveIntensity = 0.22;
+              }
+              material.needsUpdate = true;
+              orbitalStationMaterials.push(material);
+            });
+          });
+          const stationLight = new THREE.PointLight(0xb9d9ff, 5, 5, 1.8);
+          stationLight.position.set(0.18, 0.1, 0.12);
+          orbitalStationRoot.add(stationLight);
+          scene.add(orbitalStationRoot);
+
+          outerSystemUfoRoot = outerSystemUfo;
+          outerSystemUfoRoot.visible = false;
+          outerSystemUfoRoot.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            const materials = Array.isArray(object.material)
+              ? object.material
+              : [object.material];
+            materials.forEach((material) => {
+              if (!(material instanceof THREE.MeshStandardMaterial)) return;
+              material.transparent = true;
+              material.opacity = 0;
+              material.depthWrite = false;
+              material.metalness = Math.max(material.metalness, 0.7);
+              material.roughness = Math.max(material.roughness, 0.34);
+              if (material.map) {
+                material.emissive.set(0x79e3ff);
+                material.emissiveMap = material.map;
+                material.emissiveIntensity = 0.68;
+              }
+              material.needsUpdate = true;
+              outerSystemUfoMaterials.push(material);
+            });
+          });
+          const ufoLight = new THREE.PointLight(0x74e8ff, 22, 18, 1.9);
+          ufoLight.position.set(0, -0.08, 0.1);
+          outerSystemUfoRoot.add(ufoLight);
+          camera.add(outerSystemUfoRoot);
+
           const flybyLightColors = [0xa9ddff, 0xffd7a2, 0xff8a55, 0xb8d8ff];
           flybys.forEach((root, index) => {
             root.visible = false;
@@ -694,7 +769,11 @@ function OrbitScene({
     const radial = new THREE.Vector3();
     const tangent = new THREE.Vector3();
     const lookTarget = new THREE.Vector3();
+    const desiredLookTarget = new THREE.Vector3();
     const focusPosition = new THREE.Vector3();
+    const stationOffset = new THREE.Vector3();
+    const lookMatrix = new THREE.Matrix4();
+    const desiredCameraQuaternion = new THREE.Quaternion();
 
     const render = () => {
       timer.update();
@@ -726,21 +805,21 @@ function OrbitScene({
         sunRoot.rotation.z = Math.sin(elapsed * 0.37 + 0.8) * 0.018 * motion;
         sunRootMaterials.forEach((material) => {
           const normalPressure =
-            0.24 +
+            0.3 +
             (deepPressure * 0.045 +
               rollingPressure * 0.03 +
               granularPressure * 0.018) *
               motion;
           material.normalScale.set(normalPressure, normalPressure * 0.92);
           material.emissiveIntensity =
-            1.95 +
+            1.42 +
             (deepPressure * 0.18 +
               rollingPressure * 0.1 +
               granularPressure * 0.05) *
               motion;
         });
         solarLight.intensity =
-          145 +
+          132 +
           deepPressure * 14 * motion +
           rollingPressure * 7 * motion +
           granularPressure * 3 * motion;
@@ -761,34 +840,38 @@ function OrbitScene({
         sunBoilLayer.rotation.z = Math.sin(elapsed * 0.51) * 0.03 * motion;
         sunBoilMaterials.forEach((material) => {
           const pressure =
-            0.34 + (boilA * 0.07 + boilB * 0.045 + boilC * 0.02) * motion;
+            0.38 + (boilA * 0.07 + boilB * 0.045 + boilC * 0.02) * motion;
           material.normalScale.set(pressure, pressure * 0.88);
-          material.opacity = 0.16 + (boilA * 0.035 + boilB * 0.025) * motion;
+          material.opacity = 0.14 + (boilA * 0.03 + boilB * 0.02) * motion;
           material.emissiveIntensity =
-            1.72 + (boilB * 0.22 + boilC * 0.08) * motion;
+            1.08 + (boilB * 0.16 + boilC * 0.06) * motion;
         });
       }
-      if (sunShell) {
-        const shimmerA = Math.sin(elapsed * 0.73 + 1.1);
-        const shimmerB = Math.sin(elapsed * 2.48 + 0.4);
-        const shimmerC = Math.sin(elapsed * 4.62 + 2.7);
-        sunShell.scale.set(
-          3.23 * (1 + (shimmerA * 0.018 + shimmerC * 0.004) * motion),
-          3.23 * (1 + (shimmerB * 0.016 - shimmerA * 0.007) * motion),
-          3.23 * (1 + (-shimmerB * 0.011 + shimmerC * 0.005) * motion),
+      if (sunVaporShell) {
+        const vaporBreath = Math.sin(elapsed * 0.58 + 0.4);
+        const vaporRoll = Math.sin(elapsed * 1.31 + 1.8);
+        const vaporFlicker = Math.sin(elapsed * 3.23 + 0.7);
+        sunVaporShell.scale.set(
+          3.23 * (1 + (vaporBreath * 0.018 + vaporFlicker * 0.003) * motion),
+          3.23 * (1 + (vaporRoll * 0.021 - vaporBreath * 0.006) * motion),
+          3.23 * (1 + (-vaporRoll * 0.012 + vaporFlicker * 0.004) * motion),
         );
-        sunShell.rotation.y = elapsed * 0.061 * motion;
-        sunShell.rotation.x = Math.sin(elapsed * 0.36 + 0.9) * 0.06 * motion;
-        sunShell.rotation.z = Math.sin(elapsed * 0.44) * 0.052 * motion;
-        sunShellMaterials.forEach((material) => {
-          const pressure =
-            0.18 +
-            (shimmerA * 0.04 + shimmerB * 0.025 + shimmerC * 0.012) * motion;
-          material.normalScale.set(pressure, pressure);
+        sunVaporShell.position.set(
+          Math.sin(elapsed * 0.41) * 0.025 * motion,
+          Math.sin(elapsed * 0.53 + 1.2) * 0.02 * motion,
+          Math.cos(elapsed * 0.37) * 0.018 * motion,
+        );
+        sunVaporShell.rotation.y = -elapsed * 0.036 * motion;
+        sunVaporShell.rotation.x =
+          Math.sin(elapsed * 0.29 + 0.9) * 0.045 * motion;
+        sunVaporShell.rotation.z = Math.sin(elapsed * 0.43) * 0.038 * motion;
+        sunVaporMaterials.forEach((material) => {
           material.opacity =
-            0.09 + (shimmerA * 0.025 + shimmerB * 0.015) * motion;
+            0.085 +
+            (vaporBreath * 0.02 + vaporRoll * 0.012 + vaporFlicker * 0.006) *
+              motion;
           material.emissiveIntensity =
-            1.36 + (shimmerB * 0.17 + shimmerC * 0.06) * motion;
+            0.86 + (vaporRoll * 0.12 + vaporFlicker * 0.05) * motion;
         });
       }
 
@@ -805,6 +888,42 @@ function OrbitScene({
       });
       if (saturnRingRoot) {
         saturnRingRoot.rotation.y = elapsed * 0.012 * motion;
+      }
+
+      const livingOrbitTime = elapsed % 78;
+      if (orbitalStationRoot && planetRoots.length === DAYS.length) {
+        const stationStart = 5;
+        const stationEnd = 18;
+        const stationVisible =
+          livingOrbitTime >= stationStart && livingOrbitTime <= stationEnd;
+        orbitalStationRoot.visible = stationVisible;
+        if (stationVisible) {
+          const stationProgress =
+            (livingOrbitTime - stationStart) / (stationEnd - stationStart);
+          const stationFade = THREE.MathUtils.smoothstep(
+            Math.min(stationProgress / 0.16, (1 - stationProgress) / 0.16),
+            0,
+            1,
+          );
+          const stationAngle = elapsed * 0.42 * motion + 0.6;
+          stationOffset.set(
+            Math.cos(stationAngle) * 1.28,
+            0.34 + Math.sin(stationAngle * 1.7) * 0.28,
+            Math.sin(stationAngle) * 1.28,
+          );
+          orbitalStationRoot.position
+            .copy(planetRoots[2].position)
+            .add(stationOffset);
+          orbitalStationRoot.scale.setScalar(narrow ? 0.4 : 0.52);
+          orbitalStationRoot.rotation.set(
+            0.12 + Math.sin(elapsed * 0.34) * 0.05 * motion,
+            -stationAngle + Math.PI * 0.5,
+            0.12 + Math.sin(elapsed * 0.27) * 0.08 * motion,
+          );
+          orbitalStationMaterials.forEach((material) => {
+            material.opacity = stationFade * 0.94;
+          });
+        }
       }
 
       movingSurfaces.forEach(({ textures, speed, phase, wobble }, index) => {
@@ -832,20 +951,55 @@ function OrbitScene({
       });
 
       if (planetRoots.length === DAYS.length) {
-        const focusIndex = THREE.MathUtils.clamp(
-          Math.round(scrollProgress.current),
+        const requestedFocus = THREE.MathUtils.clamp(
+          scrollProgress.current,
           0,
           DAYS.length - 1,
         );
-        focusPosition.copy(planetRoots[focusIndex].position);
+        smoothedFocus = THREE.MathUtils.lerp(
+          smoothedFocus,
+          requestedFocus,
+          1 - Math.exp(-delta * (reduceMotion ? 7.5 : 3.8)),
+        );
+
+        const lowerIndex = Math.floor(smoothedFocus);
+        const upperIndex = Math.min(lowerIndex + 1, DAYS.length - 1);
+        const rawTransition = smoothedFocus - lowerIndex;
+        const transition = THREE.MathUtils.smoothstep(rawTransition, 0, 1);
+        const lowerPosition = planetRoots[lowerIndex].position;
+        const upperPosition = planetRoots[upperIndex].position;
+        const lowerAngle = Math.atan2(lowerPosition.z, lowerPosition.x);
+        const upperAngle = Math.atan2(upperPosition.z, upperPosition.x);
+        const angleDelta = Math.atan2(
+          Math.sin(upperAngle - lowerAngle),
+          Math.cos(upperAngle - lowerAngle),
+        );
+        const focusAngle = lowerAngle + angleDelta * transition;
+        const focusRadius = THREE.MathUtils.lerp(
+          Math.hypot(lowerPosition.x, lowerPosition.z),
+          Math.hypot(upperPosition.x, upperPosition.z),
+          transition,
+        );
+        focusPosition.set(
+          Math.cos(focusAngle) * focusRadius,
+          THREE.MathUtils.lerp(lowerPosition.y, upperPosition.y, transition),
+          Math.sin(focusAngle) * focusRadius,
+        );
         radial.set(focusPosition.x, 0, focusPosition.z).normalize();
         tangent.set(-radial.z, 0, radial.x);
 
-        const focusedScale = DAYS[focusIndex].scale;
+        const focusedScale = THREE.MathUtils.lerp(
+          DAYS[lowerIndex].scale,
+          DAYS[upperIndex].scale,
+          transition,
+        );
+        const saturnWeight =
+          (lowerIndex === 5 ? 1 - transition : 0) +
+          (upperIndex === 5 ? transition : 0);
         const cameraDistance =
           (narrow ? 4.25 : 4.9) +
           Math.min(focusedScale, 1.8) * 0.48 +
-          (focusIndex === 5 ? (narrow ? 0.82 : 1.18) : 0);
+          saturnWeight * (narrow ? 0.82 : 1.18);
         desiredCamera
           .copy(focusPosition)
           .addScaledVector(radial, cameraDistance)
@@ -854,26 +1008,37 @@ function OrbitScene({
 
         if (firstFocus) {
           camera.position.copy(desiredCamera);
+          desiredLookTarget
+            .set(0, narrow ? 0.42 : 0.28, 0)
+            .addScaledVector(tangent, narrow ? -0.28 : -2.05);
+          lookTarget.copy(desiredLookTarget);
+          camera.lookAt(lookTarget);
           firstFocus = false;
         } else {
           camera.position.lerp(
             desiredCamera,
-            1 - Math.exp(-delta * (narrow ? 3.4 : 2.8)),
+            1 - Math.exp(-delta * (narrow ? 4.8 : 4.2)),
+          );
+          desiredLookTarget
+            .set(0, narrow ? 0.42 : 0.28, 0)
+            .addScaledVector(tangent, narrow ? -0.28 : -2.05);
+          lookTarget.lerp(
+            desiredLookTarget,
+            1 - Math.exp(-delta * (narrow ? 5.4 : 4.8)),
+          );
+          lookMatrix.lookAt(camera.position, lookTarget, camera.up);
+          desiredCameraQuaternion.setFromRotationMatrix(lookMatrix);
+          camera.quaternion.slerp(
+            desiredCameraQuaternion,
+            1 - Math.exp(-delta * (narrow ? 6.2 : 5.6)),
           );
         }
 
-        lookTarget
-          .set(0, narrow ? 0.42 : 0.28, 0)
-          .addScaledVector(tangent, narrow ? -0.28 : -2.05);
-        camera.lookAt(lookTarget);
-
-        const snapDistance = Math.abs(
-          scrollProgress.current - Math.round(scrollProgress.current),
-        );
+        const transitionLift = Math.sin(rawTransition * Math.PI);
         camera.fov = THREE.MathUtils.lerp(
           camera.fov,
-          (narrow ? 44 : 37) + snapDistance * 15,
-          1 - Math.exp(-delta * 4),
+          (narrow ? 44 : 37) + transitionLift * (narrow ? 7 : 5),
+          1 - Math.exp(-delta * 4.8),
         );
         camera.updateProjectionMatrix();
       } else {
@@ -909,6 +1074,39 @@ function OrbitScene({
             0,
             cycleIndex % 2 === 0 ? -0.12 : 0.17,
           );
+        }
+      }
+
+      if (outerSystemUfoRoot) {
+        const ufoStart = 32;
+        const ufoEnd = 43;
+        const ufoVisible =
+          livingOrbitTime >= ufoStart && livingOrbitTime <= ufoEnd;
+        outerSystemUfoRoot.visible = ufoVisible;
+        if (ufoVisible) {
+          const ufoProgress =
+            (livingOrbitTime - ufoStart) / (ufoEnd - ufoStart);
+          const ufoFade = THREE.MathUtils.smoothstep(
+            Math.min(ufoProgress / 0.16, (1 - ufoProgress) / 0.16),
+            0,
+            1,
+          );
+          const easedUfo = THREE.MathUtils.smoothstep(ufoProgress, 0, 1);
+          outerSystemUfoRoot.scale.setScalar(narrow ? 1.7 : 2.5);
+          outerSystemUfoRoot.position.set(
+            THREE.MathUtils.lerp(-60, -34, easedUfo),
+            (narrow ? 11 : 10) + Math.sin(ufoProgress * Math.PI) * 3.4,
+            -112,
+          );
+          outerSystemUfoRoot.rotation.set(
+            -0.04 + Math.sin(elapsed * 0.31) * 0.025 * motion,
+            0.1 + Math.sin(elapsed * 0.22) * 0.08 * motion,
+            -0.08 + Math.sin(elapsed * 0.47) * 0.055 * motion,
+          );
+          outerSystemUfoMaterials.forEach((material) => {
+            material.opacity = ufoFade * 0.9;
+            material.emissiveIntensity = 0.6 + ufoFade * 0.36;
+          });
         }
       }
 

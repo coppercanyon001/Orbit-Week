@@ -10,6 +10,41 @@ Three.js only loads, scales, positions, lights, rotates, and renders those
 assets. CSS and DOM provide deterministic labels, task controls, progress,
 focus states, and accessible interaction.
 
+## Version 6 Living-Orbit Contract
+
+- Camera travel follows a continuous eased orbital arc between adjacent focus
+  planets. Position, look target, orientation, and field of view must settle
+  together without a midpoint snap.
+- Venus uses a dedicated seamless Mint PBR atmosphere map set with realistic
+  cream, pale sulfur-gold, amber, and muted brown cloud bands. It must not read
+  as lava, polished plastic, broad blurry stains, candy color, or a low-detail
+  cartoon sphere.
+- Solar fume and boiling use a dedicated seamless Mint PBR map set applied to
+  three continuous copies of the accepted Mint Sun sphere: dense photosphere,
+  drifting boil layer, and compact heat-vapor shell. No separate solar-effect
+  geometry may remain. Three.js may rotate, breathe, fade, and light these
+  Mint-authored surfaces.
+- A human orbital research station may appear near Earth occasionally. It must
+  be one isolated Mint model with a central truss, pressurized modules, docking
+  hardware, and paired blue-black solar arrays; no logos, flags, text, people,
+  planets, stars, stands, or background geometry. Local `+X` is the long-axis
+  travel direction.
+- A restrained unidentified spacecraft may cross the outer solar system
+  occasionally. It must be one isolated Mint model with a believable metallic
+  hull and authored cool-white/cyan running lights; no alien character, text,
+  logo, beam, planet, stars, stand, or background geometry. Local `+X` is the
+  travel direction.
+- The station and UFO remain rare secondary events, never overlap the task
+  card, never intersect the focus camera, and never appear simultaneously.
+
+| Semantic asset        | Ownership             | Acceptance criteria                                                                                              | Runtime path                                            | Status                    |
+| --------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------- |
+| Venus atmosphere maps | Tuesday planet        | Seamless realistic sulfuric cloud bands with fine turbulence and sphere-readable contrast                        | `public/materials/orbit-week-v6/venus/`                 | Accepted after browser QA |
+| Solar boiling maps    | Photosphere and vapor | Seamless fine convection cells, dark filament channels, bright granular ridges, and no broad flat orange regions | `public/materials/orbit-week-v6/sun/`                   | Accepted after browser QA |
+| Solar corona mantle   | Rejected provenance   | Runtime produced translucent perimeter patches resembling attached circles                                       | `public/models/orbit-week-v6/solar-corona-mantle.glb`   | Rejected after browser QA |
+| Orbital station       | Rare Earth companion  | Realistic modular human research station with solar arrays, isolated and centered                                | `public/models/orbit-week-v6/human-orbital-station.glb` | Accepted after browser QA |
+| Outer-system UFO      | Rare distant flyby    | Realistic mysterious craft with authored restrained running lights, isolated and centered                        | `public/models/orbit-week-v6/outer-system-ufo.glb`      | Accepted after browser QA |
+
 ## Version 5 Boiling-Sun Contract
 
 - Remove every separate solar-activity mesh from production. No circle, loop,
@@ -102,9 +137,9 @@ isolated celestial object per file, centered pivot, and no baked animation.
 
 | Semantic asset | Day / ownership | Acceptance criteria                                                                           | Runtime path                                                                                   | Status   |
 | -------------- | --------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | -------- |
-| Sun            | System center   | Dense realistic photosphere, turbulent granular detail, compact corona authored into material | `public/models/orbit-week-v2/sun.glb` + `public/materials/orbit-week-v3/sun/`                  | Accepted |
+| Sun            | System center   | Dense realistic photosphere, turbulent granular detail, compact corona authored into material | `public/models/orbit-week-v2/sun.glb` + `public/materials/orbit-week-v6/sun/`                  | Accepted |
 | Mercury        | Monday          | Dark gray rocky body with fine, varied impact basins rather than oversized toy craters        | `public/models/orbit-week-v2/mercury.glb`                                                      | Accepted |
-| Venus          | Tuesday         | Muted cream and sulfur-gold opaque atmospheric cloud layers                                   | `public/models/orbit-week-v2/venus.glb`                                                        | Accepted |
+| Venus          | Tuesday         | Muted cream and sulfur-gold opaque atmospheric cloud layers                                   | `public/models/orbit-week-v2/venus.glb` + `public/materials/orbit-week-v6/venus/`              | Accepted |
 | Earth          | Wednesday       | Deep blue ocean, natural land color, polar ice, thin convincing cloud systems                 | `public/models/orbit-week-v2/earth.glb`                                                        | Accepted |
 | Mars           | Thursday        | Rust-red deserts, darker basalt regions, canyons, fine craters, polar ice                     | `public/models/orbit-week-v2/mars.glb`                                                         | Accepted |
 | Jupiter        | Friday          | Dense realistic beige/brown bands, small-scale turbulence, Great Red Spot                     | `public/models/orbit-week-v3/jupiter-smooth.glb` + `public/materials/orbit-week-v3/jupiter/`   | Accepted |
@@ -145,8 +180,8 @@ It is not approved for runtime Sun activity.
 - Every GLB must have a valid GLB header, nonzero accessor bounds, at least one
   mesh and material, and parse through Three.js GLTFLoader.
 - Every planet must be a discrete authored Mint mesh. Runtime material
-  replacement is limited to the approved Mint-authored Sun, Jupiter, and
-  Neptune map sets above.
+  replacement is limited to the approved Mint-authored Sun, Venus, Jupiter,
+  and Neptune map sets above.
 - Saturn's body and ring system remain separate Mint artifacts assembled under
   one planet root; the ring must remain legible at the smallest production
   viewport and never become an edge-on flickering line.
@@ -189,6 +224,9 @@ because it already matches the darker realistic direction.
 | Saturn recovery                                | [Mint chat](https://mint.gg/chat/ph746c4mgettahm5a1qec1k9qd8atz5q) | Regenerated from the approved family preview and accepted                                                       |
 | Neptune recovery                               | [Mint chat](https://mint.gg/chat/ph71ax8m7q5nxf5k07ec8dsdpd8atahm) | Regenerated from the approved family preview and accepted                                                       |
 | Deep-space background                          | [Mint chat](https://mint.gg/chat/ph7b9771ccmwaaqszr3y2qyq6d8avwyv) | Accepted after downloaded PNG inspection                                                                        |
+| Version 6 Venus atmosphere material            | [Mint chat](https://mint.gg/chat/ph790pjcb6byry3yr7de04nq7d8az24k) | Three 1024 × 1024 PBR maps accepted after close-focus browser QA                                                |
+| Version 6 station, UFO, and rejected corona    | [Mint chat](https://mint.gg/chat/ph78tvh10ychd3g89zcabzy80h8ay077) | Station and UFO accepted; corona rejected because its translucent patches read as attached circles              |
+| Version 6 continuous boiling-Sun material      | [Mint chat](https://mint.gg/chat/ph7b889k87wh49ztfqfjd1z7j58azxr4) | Three 1024 × 1024 PBR maps accepted on three continuous copies of the existing Mint Sun sphere                  |
 
 The runtime deliberately uses the strongest close-focus result per planet
 rather than forcing every body to come from one batch. The detailed family won
@@ -211,6 +249,10 @@ provenance-only and does not appear in the runtime map.
 - Version 4 adds a 545,920-byte convection-field GLB and a 685,300-byte
   prominence GLB. Both contain one smooth mesh, one material, three embedded
   2048 × 2048 PBR textures, no animation, and nonzero normalized bounds.
+- Version 6 adds two 1024 × 1024 PBR map sets, a 1,224,824-byte human station,
+  and a 1,002,068-byte outer-system craft. Both accepted GLBs have one scene,
+  node, mesh, and material, three embedded textures, no animation, and nonzero
+  bounds. The rejected 1,589,008-byte corona GLB remains provenance-only.
 - The Saturn body measures approximately `0.998 × 0.998 × 0.998`; its separate
   ring system measures `0.998 × 0.002 × 0.998` before runtime normalization.
 - The background is a valid 1,376 × 768 RGB PNG at 1,079,855 bytes.
@@ -228,6 +270,10 @@ provenance-only and does not appear in the runtime map.
   rings, and Neptune; a three-layer boiling Mint photosphere with no attached
   circles; microscopic distant flybys; and an aligned twinkling duplicate of
   the Mint star field.
+- Version 6 browser QA confirms continuous eased camera arcs, the revised
+  close-focus Venus atmosphere, the station's lit Earth-relative orbit, and the
+  non-overlapping distant UFO window. The rejected corona is absent from the
+  runtime map; the Sun uses only continuous sphere layers.
 - Boiling-Sun QA compared elapsed Monday close-focus frames, the Friday/Jupiter
   view, and the 390 × 844 mobile composition. The surface granulation changes,
   the silhouette swells asymmetrically, and no Version 4 mesh loads.
@@ -243,3 +289,7 @@ provenance-only and does not appear in the runtime map.
 - **Version 4 convection and prominence meshes (2026-07-19):** removed from the
   runtime after user review because their rounded patches and arch silhouettes
   read as circles attached to the Sun. The files remain provenance-only.
+- **Version 6 corona mantle (2026-07-20):** rejected during browser QA because
+  translucent perimeter patches recreated the attached-circle problem. The
+  runtime instead uses the dedicated Version 6 boiling maps on three continuous
+  copies of the accepted Mint Sun sphere.

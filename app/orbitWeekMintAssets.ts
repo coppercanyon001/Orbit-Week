@@ -12,10 +12,15 @@ export const ORBIT_WEEK_MINT_ASSETS = {
     neptune: "/models/orbit-week-v2/neptune.glb",
   },
   materials: {
+    venus: {
+      baseColor: "/materials/orbit-week-v6/venus/basecolor.png",
+      normal: "/materials/orbit-week-v6/venus/normal.png",
+      roughness: "/materials/orbit-week-v6/venus/roughness.png",
+    },
     sun: {
-      baseColor: "/materials/orbit-week-v3/sun/basecolor.png",
-      normal: "/materials/orbit-week-v3/sun/normal.png",
-      roughness: "/materials/orbit-week-v3/sun/roughness.png",
+      baseColor: "/materials/orbit-week-v6/sun/basecolor.png",
+      normal: "/materials/orbit-week-v6/sun/normal.png",
+      roughness: "/materials/orbit-week-v6/sun/roughness.png",
     },
     jupiter: {
       baseColor: "/materials/orbit-week-v3/jupiter/basecolor.png",
@@ -33,6 +38,10 @@ export const ORBIT_WEEK_MINT_ASSETS = {
     cometGold: "/models/orbit-week-v2/comet-gold.glb",
     meteorEmber: "/models/orbit-week-v2/meteor-ember.glb",
     meteorCold: "/models/orbit-week-v2/meteor-cold.glb",
+  },
+  livingOrbit: {
+    orbitalStation: "/models/orbit-week-v6/human-orbital-station.glb",
+    outerSystemUfo: "/models/orbit-week-v6/outer-system-ufo.glb",
   },
 } as const;
 

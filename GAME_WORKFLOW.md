@@ -26,7 +26,9 @@ states, and task interactions.
 - All planets continuously orbit the central Mint Sun without visible orbit
   rails, rings, guide lines, or path geometry.
 - Focus transitions zoom behind the chosen planet and look inward toward the
-  Sun; the rest of the system remains visible beyond the focused planet.
+  Sun; the rest of the system remains visible beyond the focused planet. The
+  camera follows the shortest eased orbital arc, while its target, orientation,
+  and field of view interpolate continuously instead of snapping at midpoints.
 - The Sun uses three assembled copies of its Mint-authored mesh and PBR
   material: a dense emissive photosphere, a translucent boiling surface, and a
   compact heat shell. Independent UV drift, granular normal pressure, emission,
@@ -42,6 +44,11 @@ states, and task interactions.
   planet body and a separate broad Mint ring system so its rings never disappear
   into the body material. Jupiter, Saturn, and Neptune remain visibly
   semi-transparent without losing their authored surface detail.
+- Venus uses its dedicated Version 6 Mint PBR atmosphere maps so the focused
+  sphere retains fine cream, sulfur-gold, amber, and brown cloud turbulence.
+- A small lit Mint human station occasionally orbits near Earth. A separate
+  Mint unidentified craft occasionally crosses the distant outer system. Their
+  timed windows never overlap, and both fade cleanly at the edges of the event.
 - Mint-authored meteor and comet meshes are animated and lit by Three.js far
   behind the solar system. They cross slowly and occasionally at microscopic
   visual scale and never intersect the focus camera.
@@ -62,6 +69,8 @@ Verify:
 - every planet completes an orbit without crossing the task card;
 - all seven behind-planet focus cameras keep the Sun and multiple other planets
   readable, including mobile;
+- camera travel follows a smooth continuous arc at both one-day and multi-day
+  jumps, with no target, orientation, or FOV snap;
 - no visible orbit rail, ring, tube, guide, or path geometry remains;
 - meteor and comet paths stay behind the complete solar system, carry a readable
   local light, remain microscopic, and do not intersect the camera;
@@ -71,6 +80,8 @@ Verify:
   changing normal pressure, heat-shell shimmer, and slow asymmetric swelling;
 - the approved Mint star field twinkles without doubling or drifting;
 - Sun and gas-planet material motion remains seamless and subtle;
+- Venus remains sphere-readable at close focus, and the station and UFO remain
+  small, lit, rare, separated in time, and outside the task panel;
 - add, complete, and delete work by pointer and keyboard;
 - local persistence restores the correct tasks;
 - desktop and mobile layouts keep the Sun, planet, and controls readable;
