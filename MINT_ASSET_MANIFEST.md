@@ -20,8 +20,9 @@ focus states, and accessible interaction.
 - The camera begins in a wide system view, completes a little more than one
   eased revolution, spirals inward, narrows its field of view, and settles on
   the exact Monday focus camera in roughly three seconds.
-- User navigation cancels the intro cleanly. Reduced-motion users start at the
-  final Mercury view without the launch orbit.
+- User navigation cancels the intro cleanly. The normal production URL always
+  plays the opening, while the explicit `?orbit-motion=reduce` URL starts at
+  the final Mercury view and quiets ambient motion.
 - The deterministic DOM Monday card stays offscreen during flight and slides
   into place as the camera enters its final Mercury approach. It introduces no
   new visual asset and appears instantly when the orbit is skipped.

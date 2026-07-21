@@ -35,8 +35,10 @@ states, and task interactions.
   and field of view interpolate continuously instead of snapping at midpoints.
 - On first launch, the camera begins outside the system, completes a quick
   eased orbit around the Sun, spirals inward, and lands in Monday's established
-  behind-Mercury focus. The intro must finish in roughly three seconds, yield
-  to day navigation, and skip for `prefers-reduced-motion` users.
+  behind-Mercury focus. The intro must play on a normal fresh page load, finish
+  in roughly three seconds, and yield immediately to day navigation. The
+  explicit `?orbit-motion=reduce` URL skips the flight and quiets ambient
+  motion for viewers who need a low-motion presentation.
 - Monday's title card remains just offscreen during the launch orbit, then
   slides and fades into its final panel position during the Mercury landing.
   Navigation cancellation and reduced-motion mode reveal it immediately.
@@ -86,6 +88,8 @@ Verify:
   jumps, with no target, orientation, or FOV snap;
 - the launch orbit shows the wider Mint solar system, completes without
   clipping through a planet or the task card, and settles exactly on Mercury;
+- the clean production URL plays the launch orbit, while
+  `?orbit-motion=reduce` starts directly at Mercury;
 - no visible orbit rail, ring, tube, guide, or path geometry remains;
 - meteor and comet paths stay behind the complete solar system, carry a readable
   local light, remain microscopic, and do not intersect the camera;

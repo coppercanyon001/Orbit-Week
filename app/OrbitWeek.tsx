@@ -209,9 +209,10 @@ function OrbitScene({
     let launchOrbitStartedAt: number | null = null;
     let launchOrbitComplete = false;
     let launchLandingSignaled = false;
-    const forceLaunchMotion =
-      new URLSearchParams(window.location.search).get("orbit-motion") ===
-      "full";
+    const motionPreference = new URLSearchParams(window.location.search).get(
+      "orbit-motion",
+    );
+    const reduceMotion = motionPreference === "reduce";
 
     const signalLaunchLanded = (instant: boolean) => {
       if (launchLandingSignaled) return;
@@ -804,9 +805,6 @@ function OrbitScene({
       const width = canvas.clientWidth || window.innerWidth;
       const height = canvas.clientHeight || window.innerHeight;
       const narrow = width / Math.max(height, 1) < 0.76;
-      const reduceMotion =
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
-        !forceLaunchMotion;
       const motion = reduceMotion ? 0.22 : 1;
 
       if (sunRoot) {
